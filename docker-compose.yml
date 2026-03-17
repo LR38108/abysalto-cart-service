@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: cart-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "YourStrong!Passw0rd"
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'YourStrong!Passw0rd' -C -Q 'SELECT 1' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  redis:
+    image: redis:7
+    container_name: cart-redis
+    ports:
+      - "6379:6379"
+
+  cart-api:
+    build: .
+    container_name: cart-api
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    ports:
+      - "5000:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__SqlServer: "Server=sqlserver,1433;Database=cartdb;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True"
+      ConnectionStrings__Redis: "redis:6379"
