@@ -1,4 +1,5 @@
 using Cart.API.Data;
+using Cart.API.Middleware;
 using Cart.API.Services;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
@@ -15,10 +16,12 @@ builder.Services.AddDbContext<CartDbContext>(options =>
 builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
     ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("Redis")!));
 
-builder.Services.AddScoped<CartCacheService>();
-builder.Services.AddScoped<CartService>();
+builder.Services.AddScoped<ICartCacheService, CartCacheService>();
+builder.Services.AddScoped<ICartService, CartService>();
 
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseSwagger();
 app.UseSwaggerUI();

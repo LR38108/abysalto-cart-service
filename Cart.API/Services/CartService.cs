@@ -5,12 +5,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cart.API.Services;
 
-public class CartService
+public class CartService : ICartService
 {
     private readonly CartDbContext _db;
-    private readonly CartCacheService _cache;
+    private readonly ICartCacheService _cache;
 
-    public CartService(CartDbContext db, CartCacheService cache)
+    public CartService(CartDbContext db, ICartCacheService cache)
     {
         _db = db;
         _cache = cache;
@@ -97,6 +97,7 @@ public class CartService
         var item = cart.Items.FirstOrDefault(x => x.ProductId == productId);
         if (item is not null)
         {
+            cart.Items.Remove(item);
             _db.CartItems.Remove(item);
             cart.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();

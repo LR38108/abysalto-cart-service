@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace Cart.API.Services;
 
-public class CartCacheService
+public class CartCacheService : ICartCacheService
 {
     private readonly IDatabase _redis;
     private static readonly TimeSpan Ttl = TimeSpan.FromMinutes(30);
