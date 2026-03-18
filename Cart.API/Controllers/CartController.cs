@@ -17,31 +17,31 @@ public class CartController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateCart()
+    public async Task<IActionResult> CreateCart([FromBody] CreateCartRequest? request = null, CancellationToken ct = default)
     {
-        var cart = await _service.CreateCartAsync();
+        var cart = await _service.CreateCartAsync(request?.UserId, ct);
         var response = MapToResponse(cart);
         return CreatedAtAction(nameof(GetCart), new { id = response.Id }, response);
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetCart(Guid id)
+    public async Task<IActionResult> GetCart(Guid id, CancellationToken ct = default)
     {
-        var cart = await _service.GetCartAsync(id);
+        var cart = await _service.GetCartAsync(id, ct);
         return cart is null ? NotFound() : Ok(MapToResponse(cart));
     }
 
     [HttpPost("{id:guid}/items")]
-    public async Task<IActionResult> AddItem(Guid id, [FromBody] AddCartItemRequest request)
+    public async Task<IActionResult> AddItem(Guid id, [FromBody] AddCartItemRequest request, CancellationToken ct = default)
     {
-        var cart = await _service.AddItemAsync(id, request);
+        var cart = await _service.AddItemAsync(id, request, ct);
         return cart is null ? NotFound() : Ok(MapToResponse(cart));
     }
 
     [HttpDelete("{id:guid}/items/{productId:int}")]
-    public async Task<IActionResult> RemoveItem(Guid id, int productId)
+    public async Task<IActionResult> RemoveItem(Guid id, int productId, CancellationToken ct = default)
     {
-        var cart = await _service.RemoveItemAsync(id, productId);
+        var cart = await _service.RemoveItemAsync(id, productId, ct);
         return cart is null ? NotFound() : Ok(MapToResponse(cart));
     }
 

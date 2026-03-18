@@ -13,8 +13,13 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<CartDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("SqlServer")));
 
-builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
-    ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("Redis")!));
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var configuration = ConfigurationOptions.Parse(
+        builder.Configuration.GetConnectionString("Redis")!);
+    configuration.AbortOnConnectFail = false;
+    return ConnectionMultiplexer.ConnectAsync(configuration).GetAwaiter().GetResult();
+});
 
 builder.Services.AddScoped<ICartCacheService, CartCacheService>();
 builder.Services.AddScoped<ICartService, CartService>();

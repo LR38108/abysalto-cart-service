@@ -14,7 +14,7 @@ public class CartCacheService : ICartCacheService
         _redis = multiplexer.GetDatabase();
     }
 
-    public async Task<ShoppingCart?> GetAsync(Guid cartId)
+    public async Task<ShoppingCart?> GetAsync(Guid cartId, CancellationToken ct = default)
     {
         var value = await _redis.StringGetAsync(GetKey(cartId));
 
@@ -24,13 +24,13 @@ public class CartCacheService : ICartCacheService
         return JsonSerializer.Deserialize<ShoppingCart>((string)value!);
     }
 
-    public async Task SetAsync(ShoppingCart cart)
+    public async Task SetAsync(ShoppingCart cart, CancellationToken ct = default)
     {
         var payload = JsonSerializer.Serialize(cart);
         await _redis.StringSetAsync(GetKey(cart.Id), payload, Ttl);
     }
 
-    public async Task RemoveAsync(Guid cartId)
+    public async Task RemoveAsync(Guid cartId, CancellationToken ct = default)
     {
         await _redis.KeyDeleteAsync(GetKey(cartId));
     }

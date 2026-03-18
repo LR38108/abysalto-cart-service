@@ -16,7 +16,7 @@ public class CartService : ICartService
         _cache = cache;
     }
 
-    public async Task<ShoppingCart> CreateCartAsync(string? userId = null)
+    public async Task<ShoppingCart> CreateCartAsync(string? userId = null, CancellationToken ct = default)
     {
         var cart = new ShoppingCart
         {
@@ -27,33 +27,34 @@ public class CartService : ICartService
         };
 
         _db.Carts.Add(cart);
-        await _db.SaveChangesAsync();
-        await _cache.SetAsync(cart);
+        await _db.SaveChangesAsync(ct);
+        await _cache.SetAsync(cart, ct);
 
         return cart;
     }
 
-    public async Task<ShoppingCart?> GetCartAsync(Guid cartId)
+    public async Task<ShoppingCart?> GetCartAsync(Guid cartId, CancellationToken ct = default)
     {
-        var cached = await _cache.GetAsync(cartId);
+        var cached = await _cache.GetAsync(cartId, ct);
         if (cached is not null)
             return cached;
 
         var cart = await _db.Carts
+            .AsNoTracking()
             .Include(x => x.Items)
-            .FirstOrDefaultAsync(x => x.Id == cartId);
+            .FirstOrDefaultAsync(x => x.Id == cartId, ct);
 
         if (cart is not null)
-            await _cache.SetAsync(cart);
+            await _cache.SetAsync(cart, ct);
 
         return cart;
     }
 
-    public async Task<ShoppingCart?> AddItemAsync(Guid cartId, AddCartItemRequest request)
+    public async Task<ShoppingCart?> AddItemAsync(Guid cartId, AddCartItemRequest request, CancellationToken ct = default)
     {
         var cart = await _db.Carts
             .Include(x => x.Items)
-            .FirstOrDefaultAsync(x => x.Id == cartId);
+            .FirstOrDefaultAsync(x => x.Id == cartId, ct);
 
         if (cart is null)
             return null;
@@ -79,17 +80,17 @@ public class CartService : ICartService
 
         cart.UpdatedAt = DateTime.UtcNow;
 
-        await _db.SaveChangesAsync();
-        await _cache.SetAsync(cart);
+        await _db.SaveChangesAsync(ct);
+        await _cache.SetAsync(cart, ct);
 
         return cart;
     }
 
-    public async Task<ShoppingCart?> RemoveItemAsync(Guid cartId, int productId)
+    public async Task<ShoppingCart?> RemoveItemAsync(Guid cartId, int productId, CancellationToken ct = default)
     {
         var cart = await _db.Carts
             .Include(x => x.Items)
-            .FirstOrDefaultAsync(x => x.Id == cartId);
+            .FirstOrDefaultAsync(x => x.Id == cartId, ct);
 
         if (cart is null)
             return null;
@@ -100,10 +101,10 @@ public class CartService : ICartService
             cart.Items.Remove(item);
             _db.CartItems.Remove(item);
             cart.UpdatedAt = DateTime.UtcNow;
-            await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync(ct);
         }
 
-        await _cache.SetAsync(cart);
+        await _cache.SetAsync(cart, ct);
         return cart;
     }
 }
