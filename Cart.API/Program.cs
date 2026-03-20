@@ -18,7 +18,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     var configuration = ConfigurationOptions.Parse(
         builder.Configuration.GetConnectionString("Redis")!);
     configuration.AbortOnConnectFail = false;
-    return ConnectionMultiplexer.ConnectAsync(configuration).GetAwaiter().GetResult();
+    return ConnectionMultiplexer.Connect(configuration);
 });
 
 builder.Services.AddScoped<ICartCacheService, CartCacheService>();

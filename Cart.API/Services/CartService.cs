@@ -28,14 +28,14 @@ public class CartService : ICartService
 
         _db.Carts.Add(cart);
         await _db.SaveChangesAsync(ct);
-        await _cache.SetAsync(cart, ct);
+        await _cache.SetAsync(cart);
 
         return cart;
     }
 
     public async Task<ShoppingCart?> GetCartAsync(Guid cartId, CancellationToken ct = default)
     {
-        var cached = await _cache.GetAsync(cartId, ct);
+        var cached = await _cache.GetAsync(cartId);
         if (cached is not null)
             return cached;
 
@@ -45,7 +45,7 @@ public class CartService : ICartService
             .FirstOrDefaultAsync(x => x.Id == cartId, ct);
 
         if (cart is not null)
-            await _cache.SetAsync(cart, ct);
+            await _cache.SetAsync(cart);
 
         return cart;
     }
@@ -81,7 +81,7 @@ public class CartService : ICartService
         cart.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync(ct);
-        await _cache.SetAsync(cart, ct);
+        await _cache.SetAsync(cart);
 
         return cart;
     }
@@ -96,15 +96,16 @@ public class CartService : ICartService
             return null;
 
         var item = cart.Items.FirstOrDefault(x => x.ProductId == productId);
-        if (item is not null)
-        {
-            cart.Items.Remove(item);
-            _db.CartItems.Remove(item);
-            cart.UpdatedAt = DateTime.UtcNow;
-            await _db.SaveChangesAsync(ct);
-        }
+        if (item is null)
+            return cart;
 
-        await _cache.SetAsync(cart, ct);
+        cart.Items.Remove(item);
+        _db.CartItems.Remove(item);
+        cart.UpdatedAt = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync(ct);
+        await _cache.SetAsync(cart);
+
         return cart;
     }
 }
